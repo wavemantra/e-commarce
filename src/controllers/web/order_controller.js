@@ -3,17 +3,20 @@ import { ApiError } from "../../utils/ApiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { Cart } from "../../models/web/cart.model.js";
 import { User } from "../../models/web/user_model.js";
-import { Order } from '../../models/web/order_model.js'
+import { Order } from "../../models/web/order_model.js";
+import { Notification } from "../../models/web/Notification_model.js";
 
 // create order
 const createOrder = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
+
     if (!user) {
       res.status(404);
       throw new Error("User not found!");
     }
+
     const cart = await Cart.findOne({ user: userId })
       .lean()
       .populate("productCart.product");
@@ -22,15 +25,57 @@ const createOrder = asyncHandler(async (req, res) => {
       res.status(404);
       throw new Error("Cart is empty!");
     }
+
     const cartProducts = cart.productCart.map((item) => ({
       product: item.product._id,
       count: item.quantity || 1,
     }));
+
     const order = await Order.create({
       productCart: cartProducts,
       orderby: userId,
       totalPrice: cart.cartTotal,
     });
+
+    if (!order) {
+      throw new ApiError(500, "Something went wrong while creating the order");
+    }
+
+    const notificationDescription = `
+      Dear ${user.name || 'Customer'},
+
+      Thank you for choosing us! Your order has been successfully confirmed.
+
+      Order Number: ${order._id}
+      Order Date: ${new Date().toLocaleDateString()}
+
+      You have ordered the following items:
+      ${cart.productCart.map(item => `- ${item.product.name} x ${item.quantity || 1} - $${item.product.price * (item.quantity || 1)}`).join('\n')}
+
+      Total Amount: $${cart.cartTotal}
+
+      Your order is being processed and will be shipped soon. You can expect delivery by [Delivery Date]. We will notify you once your order is on its way.
+
+      Thank you for shopping with us!
+
+      Best regards,
+      [WaveMantra]
+    `;
+
+    const notification = await Notification.create({
+      Description: notificationDescription,
+    });
+
+    if (!notification) {
+      throw new ApiError(500, "Something went wrong while creating notification");
+    }
+
+    // Clear the cart after successful order creation
+    await Cart.updateOne(
+      { user: userId },
+      { $set: { productCart: [], cartTotal: 0 } }
+    );
+
     res.status(201).json({ message: "Order created successfully", order });
   } catch (error) {
     return res
@@ -39,6 +84,10 @@ const createOrder = asyncHandler(async (req, res) => {
   }
 });
 
+
+
+
+
 // get all order from user
 const getallorder = asyncHandler(async (req, res) => {
   try {
@@ -46,10 +95,16 @@ const getallorder = asyncHandler(async (req, res) => {
     const orderItems = await Order.find({ orderby: userId })
       .populate("productCart.product")
       .exec();
-    return res.status(200).json(new ApiResponse(200, "All orders fetched successfully", orderItems));
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, "All orders fetched successfully", orderItems),
+      );
   } catch (error) {
     console.error("Error occurred:", error);
-    return res.status(error.statusCode || 500).json(new ApiResponse(error.statusCode || 500, error.message));
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiResponse(error.statusCode || 500, error.message));
   }
 });
 
@@ -59,30 +114,34 @@ const getAllOrdersForAdmin = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, search = "" } = req.query;
     const query = {};
     if (search) {
-      const searchRegex = new RegExp(search, 'i'); 
+      const searchRegex = new RegExp(search, "i");
       query.$or = [
         { "productCart.product.name": searchRegex },
         { "orderby.name": searchRegex },
-        { "orderby.phone": searchRegex }
+        { "orderby.phone": searchRegex },
       ];
     }
     const orders = await Order.find(query)
       .populate("productCart.product")
-      .populate("orderby", "name email phone") 
+      .populate("orderby", "name email phone")
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
       .exec();
     // Get total count for pagination
     const totalCount = await Order.countDocuments(query);
-    return res.status(200).json(new ApiResponse(200, "Orders fetched successfully", {
-      orders,
-      totalPages: Math.ceil(totalCount / limit),
-      currentPage: parseInt(page),
-      totalCount,
-    }));
+    return res.status(200).json(
+      new ApiResponse(200, "Orders fetched successfully", {
+        orders,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: parseInt(page),
+        totalCount,
+      }),
+    );
   } catch (error) {
     console.error("Error occurred:", error);
-    return res.status(error.statusCode || 500).json(new ApiResponse(error.statusCode || 500, error.message));
+    return res
+      .status(error.statusCode || 500)
+      .json(new ApiResponse(error.statusCode || 500, error.message));
   }
 });
 const updateOrderStatus = asyncHandler(async (req, res) => {
@@ -90,7 +149,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
 
   // Validate input
-  if (!status || !["pending", "dispatched", "delivered", "cancelled"].includes(status)) {
+  if (
+    !status ||
+    !["pending", "dispatched", "delivered", "cancelled"].includes(status)
+  ) {
     return res.status(400).json(new ApiResponse(400, "Invalid status value"));
   }
 
@@ -103,7 +165,19 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     order.orderStatus = status;
     await order.save();
 
-    return res.status(200).json(new ApiResponse(200, "Order status updated successfully", order));
+    const notification = await Notification.create({
+      Description: `Your order ${status}`,
+    });
+    if (!notification) {
+      throw new ApiError(
+        500,
+        "Something went wrong while creating notification",
+      );
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Order status updated successfully", order));
   } catch (error) {
     console.error("Error occurred:", error);
     return res.status(500).json(new ApiResponse(500, error.message));
@@ -127,4 +201,10 @@ const deleteorderproduct = asyncHandler(async (req, res) => {
       .json(new ApiResponse(error.statusCode || 500, error.message));
   }
 });
-export { createOrder, deleteorderproduct, getallorder,getAllOrdersForAdmin,updateOrderStatus };
+export {
+  createOrder,
+  deleteorderproduct,
+  getallorder,
+  getAllOrdersForAdmin,
+  updateOrderStatus,
+};
