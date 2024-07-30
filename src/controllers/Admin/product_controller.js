@@ -6,7 +6,8 @@ import { Category } from "../../models/Admin/Category_model.js";
 import mongoose from "mongoose";
 
 const uploadproduct = asyncHandler(async (req, res) => {
-  const { name, status, description, category, price, Mrp, SalePrice } = req.body;
+  const { name, status, description, category, price, Mrp, SalePrice} =
+    req.body;
   try {
     if ([name, category, price].some((field) => field?.trim() === "")) {
       throw new ApiError(400, "name, category, and price are required");
@@ -54,7 +55,8 @@ const uploadproduct = asyncHandler(async (req, res) => {
     });
     if (!createImage) {
       throw new ApiError(
-        500, "Something went wrong while uploading the product",
+        500,
+        "Something went wrong while uploading the product",
       );
     }
 
@@ -68,12 +70,10 @@ const uploadproduct = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 // update details
 const updateproductdetails = asyncHandler(async (req, res) => {
   const product_id = req.params.id;
-  const { name,description, category,price } = req.body;
+  const { name, description, category, price } = req.body;
 
   // Validate input
   if (!(name || category)) {
@@ -197,7 +197,9 @@ const getallproducttrue = asyncHandler(async (req, res) => {
     }
     return res
       .status(200)
-      .json(new ApiResponse(200, "All  products fetched successfully", products));
+      .json(
+        new ApiResponse(200, "All  products fetched successfully", products),
+      );
   } catch (error) {
     return res
       .status(error.statusCode || 500)
@@ -285,5 +287,5 @@ export {
   updateproductdetails,
   getProductbyproduct,
   updateproductstatus,
-  getallproducttrue
+  getallproducttrue,
 };

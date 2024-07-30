@@ -4,91 +4,9 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { Cart } from "../../models/web/cart.model.js";
 import { Product } from "../../models/Admin/product_model.js";
 
-// const addtocart = asyncHandler(async (req, res) => {
-//   try {
-//     const { product, quantity = 1, size } = req.body;
-//     const userID = req.user._id;
-//     if (!size) {
-//       throw new ApiError(400, "Please Select Size");
-//     }
-//     // Check if product and user fields are provided
-//     if (!product) {
-//       throw new ApiError(400, "Product is required");
-//     }
-//     if (!userID) {
-//       throw new ApiError(400, "User is required");
-//     }
-
-//     // Check if the product exists
-//     const productExist = await Product.findById(product).exec();
-//     if (!productExist) {
-//       throw new ApiError(400, "Product not found");
-//     }
-
-//     // Check if the product already exists in the user's cart
-//     const productInCart = await Cart.findOne({
-//       user: userID,
-//       productCart: {
-//         product: product,
-//       },
-//     }).exec();
-
-//     if (productInCart) {
-//       throw new ApiError(409, "This product is already in the cart");
-//     }
-
-//     // Calculate the total price for the product
-//     const totalPrice = productExist.price * quantity;
-//     // Create the cart item
-//     const cart = await Cart.create({
-//       productCart: {
-//         product: product,
-//         quantity: quantity,
-//         size: size,
-//         totalPrice: totalPrice,
-//       },
-//       user: userID,
-//       // cartTotal: overallTotalPrice,
-//     });
-
-//     // // Populate the product details in the created cart item
-//     const createdCart = await Cart.findById(cart._id)
-//       .populate("productCart.product")
-//       .exec();
-
-//     if (!createdCart) {
-//       throw new ApiError(
-//         400,
-//         "Something went wrong while adding product to cart",
-//       );
-//     }
-
-//     // Calculate the total price of all products in the user's cart
-//     const cartItems = await Cart.find({ user: userID })
-//       .populate("productCart.product")
-//       .exec();
-//     const overallTotalPrice = cartItems.reduce(
-//       (acc, item) => acc + item.totalPrice,
-//       0,
-//     );
-
-//     return res.status(200).json(
-//       new ApiResponse(200, "Product added successfully", {
-//         cart: createdCart,
-//         overallTotalPrice,
-//       }),
-//     );
-//   } catch (error) {
-//     console.error("Error occurred:", error);
-//     return res
-//       .status(error.statusCode || 500)
-//       .json(new ApiResponse(error.statusCode || 500, error.message));
-//   }
-// });
 const addtocart = asyncHandler(async (req, res) => {
   try {
     const { product, quantity = 1, size } = req.body;
-    console.log(product);
     const userID = req.user._id;
     if (!size) {
       throw new ApiError(400, "Please Select Size");

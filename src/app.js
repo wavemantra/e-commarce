@@ -27,6 +27,7 @@ import UserRoute from "./routes/web/user.routes.js";
 import AddressRoute from "./routes/web/address.routes.js";
 import CartRoute from "./routes/web/cart.routes.js";
 import OrderRoute from "./routes/web/order.routes.js";
+import ProductReview from "./routes/web/ProductReview.routes.js";
 
 
 // routes declaration
@@ -41,5 +42,6 @@ app.use("/api/v1/web", ProductRouter);
 app.use("/api/v1/web", AddressRoute);
 app.use("/api/v1/web", CartRoute);
 app.use("/api/v1/web", OrderRoute);
+app.use("/api/v1/web", ProductReview);
 
 export { app };
