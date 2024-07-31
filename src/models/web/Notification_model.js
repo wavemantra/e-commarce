@@ -7,10 +7,27 @@ const notification = new Schema(
     },
     status: {
       type: Boolean,
-      default:false
+      default: false,
+    },
+  },
+  { timestamps: true },
+);
+export const Notification = mongoose.model("Notification", notification);
+
+const adminnotification = new Schema(
+  {
+    Description: {
+      type: String,
+    },
+    status: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },
 );
 
-export const Notification = mongoose.model("Notification", notification);
+export const AdminNotification = mongoose.model(
+  "AdminNotification",
+  adminnotification,
+);

@@ -79,7 +79,6 @@ const getallNotificationtrue=  asyncHandler(async(_,res)=>{
           .json(new ApiResponse(error.statusCode || 500, error.message));
       }
 }) 
-
 // update status
 const updatenotification = asyncHandler(async (req, res) => {
     const notification_id = req.params.id;
@@ -132,4 +131,5 @@ const updatenotification = asyncHandler(async (req, res) => {
         .json(new ApiResponse(error.statusCode || 500, error.message));
     }
   });
+  
 export { createNotification,getallNotification,getallNotificationflase,getallNotificationtrue,updatenotification,deletenotification};

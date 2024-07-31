@@ -29,6 +29,7 @@ import CartRoute from "./routes/web/cart.routes.js";
 import OrderRoute from "./routes/web/order.routes.js";
 import ProductReview from "./routes/web/ProductReview.routes.js";
 import notification from "./routes/web/notification.routes.js";
+import Adminnotification from "./routes/Admin/adminnotification.routes.js";
 
 
 // routes declaration
@@ -37,6 +38,7 @@ app.use("/api/v1/admin", AdminRouter);
 app.use("/api/v1/admin", CategoryRouter);
 app.use("/api/v1/admin", ProductRouter);
 app.use("/api/v1/admin", feedbackRouter);
+app.use("/api/v1/admin", Adminnotification);
 // web
 app.use("/api/v1/web", UserRoute);
 app.use("/api/v1/web", ProductRouter);
