@@ -292,12 +292,22 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 const deleteuser = asyncHandler(async (req, res) => {
   const user_id = req.params.id;
+  // const {user} = req.body;
   const deleteduser = await User.findByIdAndDelete(user_id);
   try {
     if (!deleteduser) {
       throw new ApiError(404, "user not found");
     }
+    const adminNotification = await AdminNotification.create({
+      Description: `${deleteduser.Name}! Delete the account`,
+    });
 
+    if (!adminNotification) {
+      throw new ApiError(
+        500,
+        "Something went wrong while creating notification",
+      );
+    }
     // Respond with success message
     return res
       .status(200)

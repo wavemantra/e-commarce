@@ -4,7 +4,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { Cart } from "../../models/web/cart.model.js";
 import { User } from "../../models/web/user_model.js";
 import { Order } from "../../models/web/order_model.js";
-import { Notification } from "../../models/web/Notification_model.js";
+import { Notification ,AdminNotification} from "../../models/web/Notification_model.js";
 
 // create order
 const createOrder = asyncHandler(async (req, res) => {
@@ -42,7 +42,7 @@ const createOrder = asyncHandler(async (req, res) => {
     }
 
     const notificationDescription = `
-      Dear ${user.name || 'Customer'},
+      Dear ${user.Name || 'Customer'},
 
       Thank you for choosing us! Your order has been successfully confirmed.
 
@@ -61,12 +61,50 @@ const createOrder = asyncHandler(async (req, res) => {
       Best regards,
       [WaveMantra]
     `;
-
     const notification = await Notification.create({
       Description: notificationDescription,
     });
 
     if (!notification) {
+      throw new ApiError(500, "Something went wrong while creating notification");
+    }
+// admin notification
+const adminNotificationDescription = `
+      Hello Admin,
+
+      A new order has been placed successfully by ${user.Name || 'Customer'}.
+
+      Order Details:
+      --------------
+      Order Number: ${order._id}
+      Order Date: ${new Date().toLocaleDateString()}
+      Customer Name: ${user.Name || 'Customer'}
+      Customer Email: ${user.email || "not provided"}
+      Delivery Address: ${user.address || 'N/A'}
+
+      Ordered Items:
+      ${cart.productCart.map(item => `- ${item.product.name} x ${item.quantity || 1} - $${item.product.price * (item.quantity || 1)}`).join('\n')}
+
+      Total Amount: $${cart.cartTotal}
+
+      Special Instructions: ${order.specialInstructions || 'None'}
+
+      The order is currently being processed and is expected to be delivered by [Delivery Date].
+
+      Please ensure that the order is shipped on time. You will be notified once the order is out for delivery.
+
+      Thank you!
+
+      Best regards,
+      [WaveMantra]
+    `;
+
+    // for admin
+    const adminNotification = await AdminNotification.create({
+      Description: adminNotificationDescription,
+    });
+
+    if (!adminNotification) {
       throw new ApiError(500, "Something went wrong while creating notification");
     }
 
